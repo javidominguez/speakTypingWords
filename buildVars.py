@@ -20,12 +20,12 @@ addon_info = {
 	# Add-on summary, usually the user visible name of the addon.
 	# Translators: Summary for this add-on
 	# to be shown on installation and add-on information found in Add-ons Manager.
-	"addon_summary": _("speakTypingWords"),
+	"addon_summary": _("speak typing words enhancement"),
 	# Add-on description
 	# Translators: Long description to be shown for this add-on on add-on information from add-ons manager
 	"addon_description": _("""NVDA reads the entire word when it is modified, instead of just the added part, which is the default behavior."""),
 	# version
-	"addon_version": "2024.0.1",
+	"addon_version": "2024.0.2",
 	# Author(s)
 	"addon_author": "Javi Dominguez <fjavids@gmail.com>",
 	# URL for the add-on documentation support

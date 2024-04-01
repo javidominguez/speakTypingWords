@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 'speakTypingWords' '2024.0.1'\n"
 "Report-Msgid-Bugs-To: 'nvda-translations@groups.io'\n"
-"POT-Creation-Date: 2024-03-30 16:55+0100\n"
-"PO-Revision-Date: 2024-03-30 16:57+0100\n"
+"POT-Creation-Date: 2024-04-02 00:18+0200\n"
+"PO-Revision-Date: 2024-04-02 00:21+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: es\n"
@@ -22,8 +22,8 @@ msgstr ""
 #. Translators: Summary for this add-on
 #. to be shown on installation and add-on information found in Add-ons Manager.
 #: buildVars.py:23
-msgid "speakTypingWords"
-msgstr "Lectura de palabras completas"
+msgid "speak typing words enhancement"
+msgstr "Verbalización de palabras al escribir mejorada"
 
 #. Add-on description
 #. Translators: Long description to be shown for this add-on on add-on information from add-ons manager
@@ -32,5 +32,5 @@ msgid ""
 "NVDA reads the entire word when it is modified, instead of just the added "
 "part, which is the default behavior."
 msgstr ""
-"NVDA lee la palabra completa cuando se modifica, en lugar de sólo la "
-"parte añadida, que es el comportamiento predeterminado."
+"NVDA lee la palabra completa cuando se modifica, en lugar de sólo la parte "
+"añadida, que es el comportamiento predeterminado."

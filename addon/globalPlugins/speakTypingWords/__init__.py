@@ -22,9 +22,12 @@ import editableText
 import contentRecog.recogUi
 import eventHandler
 import globalVars
+import winUser
+from tones import beep
 from logHandler import log 
 from controlTypes import *
 from typing import Tuple, Optional
+from .speechEx import speakTypedCharacters
 
 NON_BREAKING_SPACE = 160
 _classNamesToCheck = [
@@ -33,32 +36,14 @@ _classNamesToCheck = [
 	"SALFRAME", "ConsoleWindowClass"]
 _rolesToCheck = [ROLE_DOCUMENT, ROLE_EDITABLETEXT, ROLE_TERMINAL]
 def chooseNVDAObjectOverlayClasses(obj, clsList):
-	useRecogResultNVDAObjectEx = False
 	useEditableTextUseTextInfoToSpeakTypedWords = False
 	for cls in clsList:
-		if contentRecog.recogUi.RecogResultNVDAObject in cls.__mro__:
-			useRecogResultNVDAObjectEx = True
 		if editableText.EditableText in cls.__mro__:
 			useEditableTextUseTextInfoToSpeakTypedWords = True
 
-	if useRecogResultNVDAObjectEx:
-		clsList.insert(0, RecogResultNVDAObjectEx)
-	# to fix the Access8Math  problem with the "alt+m" virtual menu
-	# for the obj, the informations are bad: role= Window, className= Edit, not states
-	#  tand with no better solution, we check the length of obj.states
-	elif (obj.role in _rolesToCheck or obj.windowClassName in _classNamesToCheck) and len(obj.states):
-		# newer revisions of Windows 11 build 22000 moves focus to emoji search field.
-		# However this means NVDA's own edit field scripts will override emoji panel commands.
-		# Therefore remove text field movement commands so emoji panel commands can be used directly.
-		if hasattr(obj, "UIAAutomationId")\
-			and obj.UIAAutomationId == "Windows.Shell.InputApp.FloatingSuggestionUI.DelegationTextBox":
-			pass
-		else:
-			if True: # toggleTypedWordSpeakingEnhancementAdvancedOption(False) and useEditableTextUseTextInfoToSpeakTypedWords:
-				clsList.insert(0, EditableTextUseTextInfoToSpeakTypedWords)
-			else:
-				clsList.insert(0, EditableTextEx)
-		return
+	if (obj.role in _rolesToCheck or obj.windowClassName in _classNamesToCheck) and len(obj.states):
+		clsList.insert(0, EditableTextUseTextInfoToSpeakTypedWords)
+
 
 class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	def __init__(self):
@@ -70,146 +55,12 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 		
 class EditableTextEx(editableText.EditableText):
 	characterTyped = False
-	_commandToScript = {
-		"copy": "copyToClipboard",
-		"cut": "cutAndCopyToClipboard",
-		"paste": "pasteFromClipboard",
-		"undo": "undo",
-	}
 
-	def getSelectionInfo(self):
-		obj = api.getFocusObject()
-		treeInterceptor = obj.treeInterceptor
-		if hasattr(treeInterceptor, 'TextInfo') and not treeInterceptor.passThrough:
-			obj = treeInterceptor
-		try:
-			info = obj.makeTextInfo(textInfos.POSITION_SELECTION)
-		except (RuntimeError, NotImplementedError):
-			info = None
-		if not info or info.isCollapsed:
-			return None
-		return info
-
-	def script_copyToClipboard(self, gesture):
-		def callback(gesture):
-			clearDelayScriptTask()
-			info = self.getSelectionInfo()
-			if not info:
-				# Translators: Reported when there is no text selected (for copying).
-				ui.message(NVDAString("No selection"))
-				gesture.send()
-				return
-
-			def finaly():
-				cm = clipboard.ClipboardManager()
-				gesture.send()
-				time.sleep(0.1)
-				if cm.changed():
-					queueHandler.queueFunction(
-						queueHandler.eventQueue,
-						ui.message, _msgCopy)
-			# to check if clipboard has changed, we, now (nvda 2023.2), must use a thread !!!!
-			from threading import Thread
-			Thread(target=finaly).start()
-
-		stopDelayScriptTask()
-		# to filter out too fast script calls while holding down the command gesture.
-		delayScriptTaskWithDelay(80, callback, gesture)
-
-	def script_cutAndCopyToClipboard(self, gesture):
-		def callback():
-			clearDelayScriptTask()
-			if STATE_READONLY in self.states or (
-				STATE_EDITABLE not in self.states
-				and STATE_MULTILINE not in self.states):
-				gesture.send()
-				return
-			info = self.getSelectionInfo()
-			if not info:
-				# Translators: Reported when there is no text selected (for copying).
-				ui.message(NVDAString("No selection"))
-				gesture.send()
-				return
-			cm = clipboard.ClipboardManager()
-			gesture.send()
-			time.sleep(0.1)
-			if cm.changed():
-				queueHandler.queueFunction(
-					queueHandler.eventQueue,
-					ui.message, _msgCut)
-
-		stopDelayScriptTask()
-		# to filter out too fast script calls while holding down the command gesture.
-		delayScriptTaskWithDelay(80, callback)
-
-	def script_pasteFromClipboard(self, gesture):
-		def callback():
-			clearDelayScriptTask()
-			if (
-				STATE_READONLY in self.states or (
-				STATE_EDITABLE not in self.states
-				and not STATE_MULTILINE)):
-				gesture.send()
-				return
-			cm = clipboard.ClipboardManager()
-			time.sleep(0.1)
-			if cm.isEmpty:
-				# Translators: message to report clipboard is empty
-				ui.message(_("Clipboard is empty"))
-				gesture.send()
-				return
-			queueHandler.queueFunction(
-				queueHandler.eventQueue,
-				ui.message, _msgPaste)
-			queueHandler.queueFunction(
-				queueHandler.eventQueue,
-				self.processGesture, textInfos.UNIT_LINE, gesture)
-
-		stopDelayScriptTask()
-		# to filter out too fast script calls while holding down the command gesture.
-		delayScriptTaskWithDelay(80, callback)
-
-	def processGesture(self, unit, gesture):
-		try:
-			info = self.makeTextInfo(textInfos.POSITION_CARET)
-		except Exception:
-			gesture.send()
-			return
-		bookmark = info.bookmark
-		info.expand(textInfos.UNIT_WORD)
-		word = info.text
-		gesture.send()
-		# We'll try waiting for the caret to move, but we don't care if it doesn't.
-		caretMoved, newInfo = self._hasCaretMoved(bookmark, retryInterval=0.01, timeout=2.0, origWord=word)
-		self._caretScriptPostMovedHelper(unit, gesture, newInfo)
-		braille.handler.handleCaretMove(self)
-
-	def script_undo(self, gesture):
-		def callback():
-			clearDelayScriptTask()
-			if (
-				STATE_READONLY in self.states or (
-				STATE_EDITABLE not in self.states
-				and not STATE_MULTILINE)):
-				gesture.send()
-				return
-			queueHandler.queueFunction(
-				queueHandler.eventQueue,
-				ui.message, _msgUnDo)
-			gesture.send()
-
-		stopDelayScriptTask()
-		# to filter out too fast script calls while holding down the command gesture.
-		delayScriptTaskWithDelay(80, callback)
 
 	def _caretScriptPostMovedHelper(self, speakUnit, gesture, info=None):
 		# Forget the word currently being typed as the user has moved the caret somewhere else.
 		speech.speech.clearTypedWordBuffer()
 		super(EditableTextEx, self)._caretScriptPostMovedHelper(speakUnit, gesture, info)
-		try:
-			info = self.makeTextInfo(textInfos.POSITION_CARET)
-		except Exception:
-			return
 
 	def _caretMovementScriptHelper(self, gesture, unit):
 		# caret move but no character is typed. moving by arrow keys for exemple
@@ -220,13 +71,11 @@ class EditableTextEx(editableText.EditableText):
 			gesture.send()
 			return
 		bookmark = info.bookmark
-		curLevel = config.conf["speech"]["symbolLevel"]
 		gesture.send()
 		caretMoved, newInfo = self._hasCaretMoved(bookmark)
 		if not caretMoved and self.shouldFireCaretMovementFailedEvents:
 			eventHandler.executeEvent("caretMovementFailed", self, gesture=gesture)
 		self._caretScriptPostMovedHelper(unit, gesture, newInfo)
-		config.conf["speech"]["symbolLevel"] = curLevel
 
 
 # this code comes from leonardder  work for issue #8110, see at:
@@ -420,17 +269,14 @@ class EditableTextUseTextInfoToSpeakTypedWords(EditableTextEx):
 		):
 			# Reporting of spelling errors is enabled and this character ends a word.
 			self._reportErrorInPreviousWord()
-		from .speechEx import speakTypedCharacters
 		speakTypedCharacters(ch)
 		# keep trace that a character has been typed
 		self.characterTyped = True
-		import winUser
 		if (
 			config.conf["keyboard"]["beepForLowercaseWithCapslock"]
 			and ch.islower()
 			and winUser.getKeyState(winUser.VK_CAPITAL) & 1
 		):
-			import tones
-			tones.beep(3000, 40)
+			beep(3000, 40)
 
 
