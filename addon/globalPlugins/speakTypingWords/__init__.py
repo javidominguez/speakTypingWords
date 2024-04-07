@@ -15,6 +15,7 @@ Copyright of this adaptation by Javi Dominguez (2024)
 """
 
 import globalPluginHandler
+import globalPlugins
 import speech
 import textInfos
 import config
@@ -42,17 +43,26 @@ def chooseNVDAObjectOverlayClasses(obj, clsList):
 			useEditableTextUseTextInfoToSpeakTypedWords = True
 
 	if (obj.role in _rolesToCheck or obj.windowClassName in _classNamesToCheck) and len(obj.states):
+		try:
+			if globalPlugins.NVDAExtensionGlobalPlugin.settings.toggleTypedWordSpeakingEnhancementAdvancedOption(False):
+				log.debugWarning("Improved echo per words feature is being handled by NVDAExtensionGlobalPlugin.")
+				return
+		except:
+			pass
 		clsList.insert(0, EditableTextUseTextInfoToSpeakTypedWords)
-
 
 class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 	def __init__(self):
 		super(GlobalPlugin, self).__init__()
 
 	def chooseNVDAObjectOverlayClasses(self, obj, clsList):
+		if obj.appModule.appName.startswith("musescore"):
+			# There have been reported errors running this feature in Musescore that could not be fixed. It will remain disabled in that app meanwhile errors are not fixed.
+			log.debugWarning("Improved echo per words feature disabled in Musescore app.")
+			return
 		if globalVars.appArgs.secure == False and hasattr(obj, "windowClassName"):
 			chooseNVDAObjectOverlayClasses(obj, clsList)
-		
+
 class EditableTextEx(editableText.EditableText):
 	characterTyped = False
 

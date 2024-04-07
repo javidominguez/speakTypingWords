@@ -1,4 +1,4 @@
-# speakTypingWords NVDA addon
+# speak typing words enhancement - NVDA addon
 
 NVDA reads the entire word when it is modified, instead of just the added part, which is the default behavior.
 
@@ -12,4 +12,8 @@ This fork recovers the function by adapting it to work independently in a small 
 
 Copyright of this adaptation by Javi Dominguez (2024)
 
-Warning: There may be conflicts with versions of NVDAExtensionGlobalPlugin prior to 13.3, do not run both addons simultaneously.
+### Warnings:  
+
+* If an older version of NVDAExtensionGlobalPlugin is running and has enabled the improved echo per words option, handling will be delegated to that addon. When the option is disabled or NVDAExtensionGlobalPlugin is removed/updated, speakTypingWords will take control of word echo.  
+* There have been reported errors running this feature in Musescore that could not be fixed. It will remain disabled in that app meanwhile errors are not fixed.  
+* Some users have reported problems using imroved echo per words feature with Braille keyboards. I can not guarantee that it will work correctly with all Braille devices.  

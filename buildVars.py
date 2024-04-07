@@ -25,7 +25,7 @@ addon_info = {
 	# Translators: Long description to be shown for this add-on on add-on information from add-ons manager
 	"addon_description": _("""NVDA reads the entire word when it is modified, instead of just the added part, which is the default behavior."""),
 	# version
-	"addon_version": "2024.0.2",
+	"addon_version": "2024.0.3",
 	# Author(s)
 	"addon_author": "Javi Dominguez <fjavids@gmail.com>",
 	# URL for the add-on documentation support

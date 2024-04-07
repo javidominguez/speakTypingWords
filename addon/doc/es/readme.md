@@ -1,4 +1,4 @@
-# complemento de NVDA SpeakTypingWords
+# Verbalización de palabras al escribir mejorada  
 
 NVDA lee la palabra completa si se modifica, en lugar de sólo la parte añadida, que es el comportamiento predeterminado.
 
@@ -11,4 +11,8 @@ La función que ejecuta este código se eliminó del complemento original en la 
 
 Copyright de esta adaptación de Javi Domínguez (2024)
 
-Advertencia: Puede haber conflictos con versiones de NVDAExtensionGlobalPlugin anteriores a la 13.3, no ejecute ambos complementos simultáneamente.
+### Advertencias:  
+
+* Si se está ejecutando una versión anterior a la 13.3 de NVDAExtensionGlobalPlugin y ha habilitado la opción eco por palabras mejorada, el manejo de dicha característica se delegará a ese complemento. Cuando la opción esté desactivada o NVDAExtensionGlobalPlugin se elimine/actualice, SpeakTypingWords tomará el control del eco por palabras.  
+* Se han reportado errores al ejecutar esta función en Musescore que no se pudieron solucionar. Permanecerá deshabilitado en esa aplicación mientras no se solucionen los errores.  
+* Algunos usuarios han reportado problemas al usar el eco por palabras mejorado con teclados Braille. No puedo asegurar que funcione correctamente con todos los dispositivos Braille.
