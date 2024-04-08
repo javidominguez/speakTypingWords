@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 'speakTypingWords' '2024.0.1'\n"
 "Report-Msgid-Bugs-To: 'nvda-translations@groups.io'\n"
-"POT-Creation-Date: 2024-04-02 00:18+0200\n"
-"PO-Revision-Date: 2024-04-02 00:21+0200\n"
+"POT-Creation-Date: 2024-04-08 16:15+0200\n"
+"PO-Revision-Date: 2024-04-08 16:18+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: es\n"
@@ -22,7 +22,7 @@ msgstr ""
 #. Translators: Summary for this add-on
 #. to be shown on installation and add-on information found in Add-ons Manager.
 #: buildVars.py:23
-msgid "speak typing words enhancement"
+msgid "Typed Word Speaking Enhancement"
 msgstr "Verbalización de palabras al escribir mejorada"
 
 #. Add-on description
@@ -34,3 +34,6 @@ msgid ""
 msgstr ""
 "NVDA lee la palabra completa cuando se modifica, en lugar de sólo la parte "
 "añadida, que es el comportamiento predeterminado."
+
+#~ msgid "speak typing words enhancement"
+#~ msgstr "Verbalización de palabras al escribir mejorada"
