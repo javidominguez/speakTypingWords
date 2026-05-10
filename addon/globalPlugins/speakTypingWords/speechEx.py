@@ -61,8 +61,9 @@ def speakPreviousWord(wordSeparator):
 	word = "".join(speech.speech._curWordChars)
 	log.debug("speakPreviousWord: %s" % word)
 	typingIsProtected = api.isTypingProtected()
+	typingEchoMode = config.conf["keyboard"]["speakTypedWords"]
 	if not (log.isEnabledFor(log.IO) or (
-		config.conf["keyboard"]["speakTypedWords"] and not typingIsProtected)):
+		typingEchoMode != speech.speech.TypingEcho.OFF.value and not typingIsProtected)):
 		speech.speech.clearTypedWordBuffer()
 		return
 	try:

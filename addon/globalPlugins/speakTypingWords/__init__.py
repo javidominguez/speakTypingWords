@@ -21,7 +21,6 @@ import speech
 import textInfos
 import config
 import editableText
-import contentRecog.recogUi
 import eventHandler
 import globalVars
 import winUser
@@ -38,12 +37,18 @@ _classNamesToCheck = [
 	"SALFRAME", "ConsoleWindowClass"]
 _rolesToCheck = [ROLE_DOCUMENT, ROLE_EDITABLETEXT, ROLE_TERMINAL]
 def chooseNVDAObjectOverlayClasses(obj, clsList):
-	useEditableTextUseTextInfoToSpeakTypedWords = False
-	for cls in clsList:
-		if editableText.EditableText in cls.__mro__:
-			useEditableTextUseTextInfoToSpeakTypedWords = True
+	# Only enable the overlay for objects that already use EditableText.
+	# This avoids injecting the mixin into objects that share a role/class name
+	# but do not actually provide editable caret/text support.
+	useEditableTextClass = any(
+		editableText.EditableText in cls.__mro__ for cls in clsList
+	)
 
-	if (obj.role in _rolesToCheck or obj.windowClassName in _classNamesToCheck) and len(obj.states):
+	if (
+		useEditableTextClass
+		and (obj.role in _rolesToCheck or obj.windowClassName in _classNamesToCheck)
+		and len(obj.states)
+	):
 		clsList.insert(0, EditableTextUseTextInfoToSpeakTypedWords)
 
 class GlobalPlugin(globalPluginHandler.GlobalPlugin):
@@ -156,7 +161,7 @@ class EditableTextUseTextInfoToSpeakTypedWords(EditableTextEx):
 		self._cachedCaretBookmark = None
 		log.debug("cached caret bookmark cleared: %s" % self._cachedCaretBookmark)
 
-	def hasNewWordBeenTyped(self, wordSeparator: str) -> Tuple[Optional[bool], textInfos.TextInfo]:
+	def hasNewWordBeenTyped(self, wordSeparator: str) -> Tuple[Optional[bool], Optional[textInfos.TextInfo]]:
 		"""
 		Returns whether a new word has been typed during this core cycle.
 		It relies on self._cachedCaretBookmark, which is cleared after every core cycle.
@@ -271,16 +276,6 @@ class EditableTextUseTextInfoToSpeakTypedWords(EditableTextEx):
 			pass
 
 	def event_typedCharacter(self, ch: str):
-		if (
-			config.conf["documentFormatting"]["reportSpellingErrors"]
-			and config.conf["keyboard"]["alertForSpellingErrors"]
-			and (
-				# Not alpha, apostrophe or control.
-				ch.isspace() or (ch >= " " and ch not in "'\x7f" and not ch.isalpha())
-			)
-		):
-			# Reporting of spelling errors is enabled and this character ends a word.
-			self._reportErrorInPreviousWord()
 		speakTypedCharacters(ch)
 		# keep trace that a character has been typed
 		self.characterTyped = True
