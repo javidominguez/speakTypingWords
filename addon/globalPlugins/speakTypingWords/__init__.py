@@ -260,7 +260,42 @@ class EditableTextUseTextInfoToSpeakTypedWords(EditableTextEx):
 			# the word is before the wordSeparator
 			res = wordInfo.move(textInfos.UNIT_CHARACTER, -1, endPoint="end")
 			log.debug("word2: %s, %s" % (res, wordInfo.text))
+		# Browser TextInfo bookmarks can reconstruct an empty range even though
+		# caret movement succeeded. Do not silently fall back to the typed suffix:
+		# rebuild from the current caret, verifying the inserted separator first.
+		if not wordInfo.text or wordInfo.text.isspace():
+			recovered = self._wordBeforeCaret(caretInfo, wordSeparator)
+			if recovered is not None:
+				return (True, recovered)
 		return (True, wordInfo)
+
+	def _wordBeforeCaret(self, caretInfo, wordSeparator):
+		"""Recover a word without relying on a previously captured bookmark."""
+		info = caretInfo.copy()
+		info.collapse()
+		if info.move(textInfos.UNIT_CHARACTER, -1) == 0:
+			return None
+		info.expand(textInfos.UNIT_CHARACTER)
+		# A caret event may precede the text update. Never read an unrelated
+		# word if the expected separator is not actually present yet.
+		if wordSeparator == chr(13) and info.text == chr(10):
+			if info.move(textInfos.UNIT_CHARACTER, -1) == 0:
+				return None
+			info.expand(textInfos.UNIT_CHARACTER)
+		if info.text != wordSeparator:
+			return None
+		boundary = info.copy()
+		boundary.collapse()
+		if info.move(textInfos.UNIT_CHARACTER, -1) == 0:
+			return None
+		info.expand(textInfos.UNIT_CHARACTER)
+		if not info.text or (info.text.isspace() and info.text != chr(NON_BREAKING_SPACE)):
+			return None
+		info.expand(textInfos.UNIT_WORD)
+		info.setEndPoint(boundary, "endToStart")
+		if not info.text or info.text.isspace():
+			return None
+		return info
 
 	def _get_caret(self):
 		return self.makeTextInfo(textInfos.POSITION_CARET)
